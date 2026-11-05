@@ -63,6 +63,41 @@ def get_event(event_id):
         return jsonify({"error": str(error)}), 500
 
 
+# Create a demo user
+@app.route('/api/users', methods=['POST'])
+def create_user():
+    data = request.get_json(silent=True) or {}
+    email = data.get('email')
+    role = data.get('role', 'student')
+
+    if not isinstance(email, str) or not email.strip():
+        return jsonify({"error": "A valid email is required"}), 400
+
+    email = email.strip().lower()
+    if '@' not in email:
+        return jsonify({"error": "A valid email is required"}), 400
+
+    if role not in ('student', 'organiser'):
+        return jsonify({"error": "role must be 'student' or 'organiser'"}), 400
+
+    try:
+        response = (
+            supabase.table('users')
+            .insert({"email": email, "role": role})
+            .execute()
+        )
+
+        if not response.data:
+            return jsonify({"error": "User could not be created"}), 500
+
+        return jsonify(response.data[0]), 201
+
+    except APIError as error:
+        if getattr(error, 'code', None) == '23505':
+            return jsonify({"error": "A user with this email already exists"}), 409
+        return jsonify({"error": str(error)}), 500
+
+
 # 3. POST - Create a registration
 @app.route('/api/registrations', methods=['POST'])
 def create_registration():
