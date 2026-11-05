@@ -1,5 +1,6 @@
 
 import os
+from datetime import datetime, timezone
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from supabase import create_client, Client
@@ -171,7 +172,8 @@ def create_registration():
             supabase.table('registrations')
             .insert({
                 "user_id": user_id,
-                "event_id": event_id
+                "event_id": event_id,
+                "created_at": datetime.now(timezone.utc).isoformat()
             })
             .execute()
         )
