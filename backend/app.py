@@ -69,7 +69,6 @@ def get_event(event_id):
 def create_user():
     data = request.get_json(silent=True) or {}
     email = data.get('email')
-    role = data.get('role', 'student')
 
     if not isinstance(email, str) or not email.strip():
         return jsonify({"error": "A valid email is required"}), 400
@@ -78,13 +77,10 @@ def create_user():
     if '@' not in email:
         return jsonify({"error": "A valid email is required"}), 400
 
-    if role not in ('student', 'organiser'):
-        return jsonify({"error": "role must be 'student' or 'organiser'"}), 400
-
     try:
         response = (
             supabase.table('users')
-            .insert({"email": email, "role": role})
+            .insert({"email": email, "role": "student"})
             .execute()
         )
 
@@ -96,6 +92,62 @@ def create_user():
     except APIError as error:
         if getattr(error, 'code', None) == '23505':
             return jsonify({"error": "A user with this email already exists"}), 409
+        return jsonify({"error": str(error)}), 500
+
+
+# Host a campus event
+@app.route('/api/events', methods=['POST'])
+def create_event():
+    data = request.get_json(silent=True) or {}
+    title = data.get('title')
+    category = data.get('category')
+    location = data.get('location')
+    timestamp = data.get('timestamp')
+    host_id = data.get('organiser_id') or data.get('organizer_id')
+
+    if not all(isinstance(value, str) and value.strip() for value in (title, category, location, timestamp)):
+        return jsonify({"error": "title, category, location, and timestamp are required"}), 400
+    if not host_id:
+        return jsonify({"error": "A host user is required"}), 400
+
+    try:
+        parsed_timestamp = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+        if parsed_timestamp.tzinfo is None:
+            parsed_timestamp = parsed_timestamp.replace(tzinfo=timezone.utc)
+    except ValueError:
+        return jsonify({"error": "timestamp must be a valid date and time"}), 400
+
+    capacity = data.get('capacity')
+    if capacity not in (None, ''):
+        try:
+            capacity = int(capacity)
+            if capacity < 1:
+                raise ValueError
+        except (TypeError, ValueError):
+            return jsonify({"error": "capacity must be a positive whole number"}), 400
+    else:
+        capacity = None
+
+    try:
+        host = supabase.table('users').select('id').eq('id', host_id).execute()
+        if not host.data:
+            return jsonify({"error": "Host user was not found"}), 404
+
+        event_data = {
+            "title": title.strip(),
+            "description": str(data.get('description') or '').strip(),
+            "category": category.strip(),
+            "location": location.strip(),
+            "timestamp": parsed_timestamp.isoformat(),
+            "capacity": capacity,
+            "organiser_id": host_id,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        response = supabase.table('events').insert(event_data).execute()
+        if not response.data:
+            return jsonify({"error": "Event could not be created"}), 500
+        return jsonify(response.data[0]), 201
+    except APIError as error:
         return jsonify({"error": str(error)}), 500
 
 
