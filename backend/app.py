@@ -100,13 +100,11 @@ def create_user():
 def create_event():
     data = request.get_json(silent=True) or {}
     title = data.get('title')
-    category = data.get('category')
-    location = data.get('location')
     timestamp = data.get('timestamp')
     host_id = data.get('organiser_id') or data.get('organizer_id')
 
-    if not all(isinstance(value, str) and value.strip() for value in (title, category, location, timestamp)):
-        return jsonify({"error": "title, category, location, and timestamp are required"}), 400
+    if not isinstance(title, str) or not title.strip() or not isinstance(timestamp, str) or not timestamp.strip():
+        return jsonify({"error": "title and timestamp are required"}), 400
     if not host_id:
         return jsonify({"error": "A host user is required"}), 400
 
@@ -135,13 +133,9 @@ def create_event():
 
         event_data = {
             "title": title.strip(),
-            "description": str(data.get('description') or '').strip(),
-            "category": category.strip(),
-            "location": location.strip(),
             "timestamp": parsed_timestamp.isoformat(),
             "capacity": capacity,
             "organiser_id": host_id,
-            "created_at": datetime.now(timezone.utc).isoformat(),
         }
         response = supabase.table('events').insert(event_data).execute()
         if not response.data:

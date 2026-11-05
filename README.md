@@ -2,6 +2,14 @@
 
 Flask API for the event management app, using Supabase for data storage.
 
+## Supabase tables
+
+- `users`: `id` (uuid), `email` (text), `role` (text). Demo users are students.
+- `events`: `id` (uuid), `organiser_id` (uuid → `users.id`), `title` (text), `capacity` (int4), `timestamp` (timestamptz).
+- `registrations`: `id` (uuid), `user_id` (uuid → `users.id`), `event_id` (uuid → `events.id`), `created_at` (timestamptz).
+
+The `events.organiser_id` relationship identifies the student who hosts an event. Keep event inserts limited to columns present in this schema.
+
 ## Deploy to Render
 
 1. Push this folder to a GitHub/GitLab repository.

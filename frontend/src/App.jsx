@@ -113,9 +113,6 @@ export default function App() {
     try {
       const result = await request('/api/events', { method: 'POST', body: JSON.stringify({
         title: String(form.get('title') || '').trim(),
-        description: String(form.get('description') || '').trim(),
-        category: String(form.get('category') || '').trim(),
-        location: String(form.get('location') || '').trim(),
         timestamp: new Date(String(form.get('timestamp'))).toISOString(),
         capacity: String(form.get('capacity') || ''),
         organiser_id: activeUser.id,
@@ -219,10 +216,7 @@ function UserDialog({ busy, onClose, onSubmit }) { return <div className="modal-
 
 function EventFormDialog({ busy, onClose, onSubmit }) {
   return <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) onClose() }}><section className="modal user-modal event-form-modal" role="dialog" aria-modal="true" aria-labelledby="event-form-title"><button className="modal-close" aria-label="Close create event form" onClick={onClose}><X size={19}/></button><span className="create-user-mark"><CalendarDays size={21}/></span><div className="eyebrow">BRING CAMPUS TOGETHER</div><h2 id="event-form-title">Create an event</h2><p className="user-modal-intro">Your student account will be saved as the event host.</p><form onSubmit={onSubmit}>
-    <label className="form-label" htmlFor="event-title">Event name</label><input className="form-input" id="event-title" name="title" required maxLength="120" placeholder="e.g. Campus game night"/>
-    <label className="form-label" htmlFor="event-description">Description</label><textarea className="form-input event-description-input" id="event-description" name="description" rows="3" maxLength="1000" placeholder="What should people know?"/>
-    <label className="form-label" htmlFor="event-category">Category</label><input className="form-input" id="event-category" name="category" required maxLength="60" placeholder="e.g. Social, Learning, Sports"/>
-    <label className="form-label" htmlFor="event-location">Location</label><input className="form-input" id="event-location" name="location" required maxLength="160" placeholder="Where will it happen?"/>
+    <label className="form-label" htmlFor="event-title">Event title</label><input className="form-input" id="event-title" name="title" required maxLength="120" placeholder="e.g. Campus game night"/>
     <label className="form-label" htmlFor="event-timestamp">Date and time</label><input className="form-input" id="event-timestamp" name="timestamp" type="datetime-local" required min={new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}/>
     <label className="form-label" htmlFor="event-capacity">Capacity <span className="optional-label">(optional)</span></label><input className="form-input" id="event-capacity" name="capacity" type="number" min="1" step="1" placeholder="Leave blank for no limit"/>
     <button className="button button-primary form-submit" type="submit" disabled={busy}>{busy ? <><LoaderCircle className="spin" size={16}/> Saving event…</> : <>Create event <ArrowRight size={16}/></>}</button>
