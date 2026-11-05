@@ -173,7 +173,7 @@ export default function App() {
         <footer className="page-footer"><span>© 2026 CampusConnect</span><span>Built for the moments that bring us together <span className="footer-star">✳</span></span></footer>
       </div>
     </main>
-    {selectedEvent && <EventDialog event={selectedEvent} registered={registeredIds.has(String(selectedEvent.id))} busy={busy} onClose={() => setSelectedEvent(null)} onRegister={() => registerForEvent(selectedEvent)} />}
+    {selectedEvent && <EventDialog event={eventsById.get(String(selectedEvent.id)) || selectedEvent} registered={registeredIds.has(String(selectedEvent.id))} busy={busy} onClose={() => setSelectedEvent(null)} onRegister={() => registerForEvent(selectedEvent)} />}
     {userModal && <UserDialog busy={busy} onClose={() => setUserModal(false)} onSubmit={createUser} />}
     {eventModal && <EventFormDialog busy={busy} onClose={() => setEventModal(false)} onSubmit={createEvent} />}
     {toast && <div className={`toast toast-${toast.type}`} role="status"><span>{toast.type === 'success' ? <Check size={17} /> : <X size={17} />}</span>{toast.message}<button aria-label="Dismiss message" onClick={() => setToast(null)}><X size={15} /></button></div>}

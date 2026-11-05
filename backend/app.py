@@ -1,5 +1,6 @@
 
 import os
+from collections import Counter
 from datetime import datetime, timezone
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -24,6 +25,30 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
+def add_registration_counts(events):
+    counts = Counter()
+    offset = 0
+    page_size = 500
+
+    while True:
+        page = (
+            supabase.table('registrations')
+            .select('id, event_id')
+            .order('id')
+            .range(offset, offset + page_size - 1)
+            .execute()
+        )
+        rows = page.data or []
+        counts.update(str(row['event_id']) for row in rows if row.get('event_id'))
+        if len(rows) < page_size:
+            break
+        offset += page_size
+
+    for event in events:
+        event['registration_count'] = counts.get(str(event['id']), 0)
+    return events
+
+
 # Health check
 @app.route('/', methods=['GET'])
 def home():
@@ -38,7 +63,7 @@ def home():
 def get_events():
     try:
         response = supabase.table('events').select('*').execute()
-        return jsonify(response.data), 200
+        return jsonify(add_registration_counts(response.data)), 200
 
     except APIError as error:
         return jsonify({"error": str(error)}), 500
@@ -58,7 +83,8 @@ def get_event(event_id):
         if not response.data:
             return jsonify({"error": "Event not found"}), 404
 
-        return jsonify(response.data[0]), 200
+        event = add_registration_counts(response.data)[0]
+        return jsonify(event), 200
 
     except APIError as error:
         return jsonify({"error": str(error)}), 500
